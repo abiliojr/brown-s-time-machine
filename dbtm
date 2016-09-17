@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # Doc Brown's time machine
 
@@ -14,7 +14,7 @@
 
 # Check README for more information.
 
-# Only depends on bc and bash.
+# Only depends on bc.
 
 # Copyright (c) 2016, Abilio Marques
 # All rights reserved.
