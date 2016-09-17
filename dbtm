@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+
+# Doc Brown's time machine
+
+# rsync snapshot backup, by Abilio Marques
+# uses hard links to save disk space
+
+# Call like dbtm remotedir localdir snapshots [rsyncextraparams] [prefix]
+# Use "smart" in snapshots to emulate Apple Time Machine.
+# 
+# Keeps all backups with less than 24 hours, an hourly backup for the first week
+# a copy per day for the first month, a copy per week for the first year
+# and a copy per month afterwards.
+
+# Check README for more information.
+
+# Only depends on bc and bash.
+
+# Copyright (c) 2016, Abilio Marques
+# All rights reserved.
+# The work here contained is published under the Simplified BSD License.
+# Read LICENSE for more information.
+
+# Time Machine is a trademark of Apple Inc.
+
+load_parameters () {
+    num_args=${#commandline_args[@]}
+    if [ $num_args -lt 3 ]; then
+        echo call like: dbtm remotedir localdir snapshots [rsyncextraparams] [prefix]
+        echo snapshots="smart" to emulate Apple Time Machine behavior
+        exit
+    fi
+
+    remotedir="${commandline_args[0]}"         # rsync remote dir
+    localdir="${commandline_args[1]}"          # local directory to put the snapshots
+    snapshotstokeep="${commandline_args[2]}"   # number of snapshots to keep, or "smart" to get a Time Machine behavior
+    rsyncextraparams="${commandline_args[3]}"  # extra rsync params
+    prefix="${commandline_args[4]}"            # snapshots prefix
+    if [ -n "$prefix" ]; then
+        prefix=${prefix}_
+    fi
+}
+
+find_latest_backup () {
+    latest=$(find $localdir -mindepth 1 -prune -not -path '*/\.*' -type d -name "$prefix*" -print0 | xargs -0 ls -1td | head -1)
+    newdir="$prefix$(date +%Y%m%d_%H%M%S)"
+    if [ -n "$latest" ]; then
+        latest="../"$(basename $latest)
+    fi
+}
+
+sync_with_links () {
+    rsynccmd=$(echo rsync --stats --delete -a --link-dest=$latest $(echo "$rsyncextraparams") $remotedir $localdir/$newdir/)
+
+    syncresult=$(eval $rsynccmd)
+    syncerrors=$?
+
+    totalfiles=$(echo "$syncresult" | grep "files transferred" | sed -e 's/.*: \([0-9]*\)/\1/g' | tr -d ',')
+}
+
+get_file_time () {
+    case $(uname -s | tr '[:upper:]' '[:lower:]') in
+        *bsd*|darwin*) stat -f "%c" $1;;
+        linux*)        stat -c "%Z" $1;;
+        *)             echo "unknown OS"; exit;;
+    esac
+}
+
+process_directory () {
+    limit=$1
+    delta=$2
+    if [ $tstamp -ge $limit ]; then
+        if [ $((tstamp - prevtstamp)) -lt $delta ]; then
+            rm -Rf $filename
+        else
+            prevtstamp=$tstamp
+        fi
+        return 0
+    fi
+    return 1
+}
+
+remove_old_backups () {
+    directories=$(find $localdir -mindepth 1 -prune -not -path '*/\.*' -type d -name "$prefix*" -print0 | xargs -0 ls -1rcd)
+
+    if [ ! -z "${snapshotstokeep##*[!0-9]*}" ]; then
+        # got a number, keep n backups
+        # find how many snapshots must be removed, and kill them
+
+        totaldirectories=$(echo "$directories" | wc -l)
+        toremove=$((totaldirectories - snapshotstokeep))
+
+        if [ $toremove -lt 0 ]
+        then
+            toremove=0
+        fi
+
+        rm -Rf $(echo "$directories" | head -$toremove)
+    elif [ $snapshotstokeep = "smart" ]; then
+        hourdelta=3600
+        daydelta=$((hourdelta * 24))
+        weekdelta=$((daydelta * 7))
+        monthdelta=$((daydelta * 30))
+        yeardelta=$((daydelta * 365))
+        now=$(date "+%s")
+        midnight=$(date -u "+%s-((%H*60+%M)*60+%S)" | bc)
+        daylimit=$((now-daydelta))
+        weeklimit=$((midnight-weekdelta))
+        monthlimit=$((midnight-monthdelta))
+        yearlimit=$((midnight-yeardelta))
+
+        prevtstamp=0
+
+        for filename in $directories; do
+            tstamp=$(get_file_time $filename)
+
+            # if newer than 24 hours, don't do anything
+            process_directory $daylimit 0 && continue
+
+            # keep one copy per hour during first week
+            process_directory $weeklimit $hourdelta && continue
+
+            # keep one copy per day during first month
+            process_directory $monthlimit $daydelta && continue
+
+            # keep one copy per week during first year
+            process_directory $yearlimit $weekdelta && continue
+
+            # keep one copy per month after the first year
+            process_directory 0 $monthdelta && continue
+        done
+    fi
+}
+
+main () {
+    load_parameters
+    find_latest_backup
+    sync_with_links
+
+    if [ $syncerrors -eq 0 -a $totalfiles -gt 0 ]; then
+        remove_old_backups
+        exit 1
+    else
+        # no files were transfered, remove the copied snapshot
+        rm -Rf $localdir/$newdir
+    fi
+}
+
+commandline_args=("$@")
+main
