@@ -14,8 +14,6 @@
 
 # Check README for more information.
 
-# Only depends on bc.
-
 # Copyright (c) 2016, Abilio Marques
 # All rights reserved.
 # The work here contained is published under the Simplified BSD License.
@@ -102,7 +100,7 @@ smart_delete () {
     monthdelta=$((daydelta * 30))
     yeardelta=$((daydelta * 365))
     now=$(date "+%s")
-    midnight=$(date -u "+%s-((%H*60+%M)*60+%S)" | bc)
+    midnight=$(($(date -u "+%-s-((%-H*60+%-M)*60+%-S)")))
     daylimit=$((now-daydelta))
     weeklimit=$((midnight-weekdelta))
     monthlimit=$((midnight-monthdelta))

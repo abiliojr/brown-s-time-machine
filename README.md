@@ -9,7 +9,7 @@ New snapshots are created using links to the previous backups, so only the files
 In case there is any problem during the file transfer, the program will abort, removing the unfinished backup dir.
 
 # Installation
-Just put the script wherever you want. You must have bc and rsync installed in order to use it.
+Just put the script wherever you want. You must have rsync installed in order to use it.
 
 # Usage
 Call it like ```dbtm remotedir localdir [snapshots] [rsyncextraparams] [prefix]```
