@@ -30,7 +30,7 @@ __Snapshots__ will tell the program how many snapshots to keep. After the number
 __Rsyncextraparams__ can be used to pass extra parameters to _rsync_, for example:
 ```"-e 'ssh -i keys/id_rsa' --bwlimit=200 --exclude-from='wp_skip.lst'"```, will let the use of a specific _RSA key_, limit the bandwidth to 200 Kb/s, and use the patterns contained in the local file _wp_skip.lst_ to be excluded from the transfer.
 
-__Prefix__ can be set to any string to mark a group of snapshots like belonging to the same backup. This can be useful if you're backing up several things inside the same directory.  
+__Prefix__ can be set to any string to mark a group of snapshots like belonging to the same backup. This can be useful if you're backing up several things inside the same directory. For example, if the prefix is _wp_, a snapshot will be created under the directory name ```wp_19551112_060000``` for that specific date and time.
 
 # Notes
 This script started his life a few years ago as a quick hack. In it's different versions, it has been used in dozens of situations. With time, things like _Time Machine_ emulation were added. I encourage you to contact me in case you used it and have suggestions or bug reports.
