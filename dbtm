@@ -7,7 +7,7 @@
 
 # Call like dbtm remotedir localdir [snapshots] [rsyncextraparams] [prefix]
 # Use "smart" in snapshots to emulate Apple Time Machine. (default behavior)
-# 
+#
 # Keeps all backups with less than 24 hours, an hourly backup for the first week
 # a copy per day for the first month, a copy per week for the first year
 # and a copy per month afterwards.
@@ -80,55 +80,63 @@ process_directory () {
     return 1
 }
 
+keep_number_backups () {
+    # find how many snapshots we have in excess, and kill them
+
+    totaldirectories=$(echo "$directories" | wc -l)
+    toremove=$((totaldirectories - snapshotstokeep))
+
+    if [ $toremove -lt 0 ]
+    then
+        toremove=0
+    fi
+
+    rm -Rf $(echo "$directories" | head -$toremove)
+}
+
+smart_delete () {
+    hourdelta=3600
+    daydelta=$((hourdelta * 24))
+    weekdelta=$((daydelta * 7))
+    monthdelta=$((daydelta * 30))
+    yeardelta=$((daydelta * 365))
+    now=$(date "+%s")
+    midnight=$(date -u "+%s-((%H*60+%M)*60+%S)" | bc)
+    daylimit=$((now-daydelta))
+    weeklimit=$((midnight-weekdelta))
+    monthlimit=$((midnight-monthdelta))
+    yearlimit=$((midnight-yeardelta))
+
+    prevtstamp=0
+
+    for filename in $directories; do
+        tstamp=$(get_file_time $filename)
+
+        # if newer than 24 hours, don't do anything
+        process_directory $daylimit 0 && continue
+
+        # keep one copy per hour during first week
+        process_directory $weeklimit $hourdelta && continue
+
+        # keep one copy per day during first month
+        process_directory $monthlimit $daydelta && continue
+
+        # keep one copy per week during first year
+        process_directory $yearlimit $weekdelta && continue
+
+        # keep one copy per month after the first year
+        process_directory 0 $monthdelta && continue
+    done
+}
+
 remove_old_backups () {
     directories=$(find $localdir -mindepth 1 -prune -not -path '*/\.*' -type d -name "$prefix*" -print0 | xargs -0 ls -1rcd)
 
     if [ ! -z "${snapshotstokeep##*[!0-9]*}" ]; then
         # got a number, keep n backups
-        # find how many snapshots must be removed, and kill them
-
-        totaldirectories=$(echo "$directories" | wc -l)
-        toremove=$((totaldirectories - snapshotstokeep))
-
-        if [ $toremove -lt 0 ]
-        then
-            toremove=0
-        fi
-
-        rm -Rf $(echo "$directories" | head -$toremove)
+        keep_number_backups
     elif [ -z "$snapshotstokeep" ] || [ "$snapshotstokeep" = "smart" ]; then
-        hourdelta=3600
-        daydelta=$((hourdelta * 24))
-        weekdelta=$((daydelta * 7))
-        monthdelta=$((daydelta * 30))
-        yeardelta=$((daydelta * 365))
-        now=$(date "+%s")
-        midnight=$(date -u "+%s-((%H*60+%M)*60+%S)" | bc)
-        daylimit=$((now-daydelta))
-        weeklimit=$((midnight-weekdelta))
-        monthlimit=$((midnight-monthdelta))
-        yearlimit=$((midnight-yeardelta))
-
-        prevtstamp=0
-
-        for filename in $directories; do
-            tstamp=$(get_file_time $filename)
-
-            # if newer than 24 hours, don't do anything
-            process_directory $daylimit 0 && continue
-
-            # keep one copy per hour during first week
-            process_directory $weeklimit $hourdelta && continue
-
-            # keep one copy per day during first month
-            process_directory $monthlimit $daydelta && continue
-
-            # keep one copy per week during first year
-            process_directory $yearlimit $weekdelta && continue
-
-            # keep one copy per month after the first year
-            process_directory 0 $monthdelta && continue
-        done
+        smart_delete
     fi
 }
 
