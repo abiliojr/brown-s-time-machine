@@ -12,7 +12,7 @@ In case there is any problem during the file transfer, the program will abort, r
 Just put the script wherever you want. You must have bash, bc and rsync in order to use it.
 
 # Usage
-Call it like ```dbtm remotedir localdir snapshots [rsyncextraparams] [prefix]```
+Call it like ```dbtm remotedir localdir [snapshots] [rsyncextraparams] [prefix]```
 
 Parameters __remotedir__ and __localdir__ follow the rsync notation. For example:
 ```rbackup@doc.brown.server:/usr/local/www/wordpress backups/website``` will access the _doc.brown.server_ and backup the contents of his wordpress site into the directory _backups/website_.
@@ -20,7 +20,7 @@ Parameters __remotedir__ and __localdir__ follow the rsync notation. For example
 In the case you want to back up several remote directories at once, you can pass them between quotes (as a single parameter), in the _rsync_ style:
 ```"rbackup@doc.brown.server:~/crazy_ideas.txt :/usr/local/www/wordpress"``` will backup the file named _crazy_ideas.txt_ in addition to his website.
 
-__Snapshots__ will tell the program how many snapshots to keep. After the number is reached, older snapshots are automatically erased. You'll probably want to set it to _"smart"_ in order to emulate Apple Time Machine behavior. In this mode it will keep:
+__Snapshots__ will tell the program how many snapshots to keep. After the number is reached, older snapshots are automatically erased. You'll probably want to set it to _"smart"_ (set by default) in order to emulate Apple Time Machine behavior. In this mode it will keep:
 - __All__ backups with __less than 24 hours__.
 - An __hourly__ backup for the __first week__.
 - A __daily__ backup for the __first month__.

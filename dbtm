@@ -5,8 +5,8 @@
 # rsync snapshot backup, by Abilio Marques
 # uses hard links to save disk space
 
-# Call like dbtm remotedir localdir snapshots [rsyncextraparams] [prefix]
-# Use "smart" in snapshots to emulate Apple Time Machine.
+# Call like dbtm remotedir localdir [snapshots] [rsyncextraparams] [prefix]
+# Use "smart" in snapshots to emulate Apple Time Machine. (default behavior)
 # 
 # Keeps all backups with less than 24 hours, an hourly backup for the first week
 # a copy per day for the first month, a copy per week for the first year
@@ -25,8 +25,8 @@
 
 load_parameters () {
     num_args=${#commandline_args[@]}
-    if [ $num_args -lt 3 ]; then
-        echo call like: dbtm remotedir localdir snapshots [rsyncextraparams] [prefix]
+    if [ $num_args -lt 2 ]; then
+        echo call like: dbtm remotedir localdir [snapshots] [rsyncextraparams] [prefix]
         echo snapshots="smart" to emulate Apple Time Machine behavior
         exit
     fi
@@ -96,7 +96,7 @@ remove_old_backups () {
         fi
 
         rm -Rf $(echo "$directories" | head -$toremove)
-    elif [ $snapshotstokeep = "smart" ]; then
+    elif [ -z "$snapshotstokeep" ] || [ "$snapshotstokeep" = "smart" ]; then
         hourdelta=3600
         daydelta=$((hourdelta * 24))
         weekdelta=$((daydelta * 7))
