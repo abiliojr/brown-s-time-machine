@@ -23,6 +23,8 @@
 
 # Time Machine is a trademark of Apple Inc.
 
+starttime=$(date +%Y%m%d_%H%M%S)
+
 load_parameters () {
     if [ $# -lt 2 ]; then
         echo call like: $0 remotedir localdir [snapshots] [rsyncextraparams] [prefix]
@@ -42,7 +44,7 @@ load_parameters () {
 
 find_latest_backup () {
     latest=$(find $localdir -mindepth 1 -prune -not -path '*/\.*' -type d -name "$prefix*" -print0 | xargs -0 ls -1td | head -1)
-    newdir="$prefix$(date +%Y%m%d_%H%M%S)"
+    newdir="$prefix$starttime"
     if [ -n "$latest" ]; then
         latest="../"$(basename $latest)
     fi
