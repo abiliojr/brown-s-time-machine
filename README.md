@@ -1,6 +1,6 @@
 # Doc Brown's time machine
 
-Doc Brown's time machine is another rsync powered backup script. This one needs almost nothing to run. It allows the final user to build his/her own backup system using things like cron.
+Doc Brown's time machine is yet another rsync powered backup script. This one needs almost nothing to run. It allows the final user to build his/her own backup system using things like cron.
 
 Whenever this script is called, it will create a new directory in the localdir (see bellow) with the timestamp in format year, month, day, hour, minutes and seconds. After that, it will proceed to remove old backups, if needed, as ordered in the parameters (see bellow).
 
@@ -33,8 +33,7 @@ __Rsyncextraparams__ can be used to pass extra parameters to _rsync_, for exampl
 __Prefix__ can be set to any string to mark a group of snapshots like belonging to the same backup. This can be useful if you're backing up several things inside the same directory.  
 
 # Notes
-This script started his life a few years ago as a quick hack. With time, things like _Time Machine_ emulation were added. I encourage you to contact me in case you used it and have 
-suggestions or bug reports.
+This script started his life a few years ago as a quick hack. In it's different versions, it has been used in dozens of situations. With time, things like _Time Machine_ emulation were added. I encourage you to contact me in case you used it and have suggestions or bug reports.
 
 The work here contained is published under the Simplified BSD License. Read LICENSE for more information.
 
