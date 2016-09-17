@@ -24,18 +24,17 @@
 # Time Machine is a trademark of Apple Inc.
 
 load_parameters () {
-    num_args=${#commandline_args[@]}
-    if [ $num_args -lt 2 ]; then
-        echo call like: dbtm remotedir localdir [snapshots] [rsyncextraparams] [prefix]
+    if [ $# -lt 2 ]; then
+        echo call like: $0 remotedir localdir [snapshots] [rsyncextraparams] [prefix]
         echo snapshots="smart" to emulate Apple Time Machine behavior
         exit
     fi
 
-    remotedir="${commandline_args[0]}"         # rsync remote dir
-    localdir="${commandline_args[1]}"          # local directory to put the snapshots
-    snapshotstokeep="${commandline_args[2]}"   # number of snapshots to keep, or "smart" to get a Time Machine behavior
-    rsyncextraparams="${commandline_args[3]}"  # extra rsync params
-    prefix="${commandline_args[4]}"            # snapshots prefix
+    remotedir="$1"         # rsync remote dir
+    localdir="$2"          # local directory to put the snapshots
+    snapshotstokeep="$3"   # number of snapshots to keep, or "smart" to get a Time Machine behavior
+    rsyncextraparams="$4"  # extra rsync params
+    prefix="$5"            # snapshots prefix
     if [ -n "$prefix" ]; then
         prefix=${prefix}_
     fi
@@ -141,7 +140,6 @@ remove_old_backups () {
 }
 
 main () {
-    load_parameters
     find_latest_backup
     sync_with_links
 
@@ -154,5 +152,5 @@ main () {
     fi
 }
 
-commandline_args=("$@")
+load_parameters "$@"
 main
